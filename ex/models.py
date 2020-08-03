@@ -4,7 +4,7 @@ from django.conf import settings
 import random
 from djongo import models as djo
 from django import forms
-
+from django.contrib.auth.models import User
 
 class Generic_ip(models.Model):
     ip = models.GenericIPAddressField()
