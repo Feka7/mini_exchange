@@ -68,6 +68,19 @@ class IsOwnerOrReadOnly_profile(permissions.BasePermission):
 
         return str(obj.user) == str(request.user)
 
+
+class IsOwnerOrReadOnly_user(permissions.BasePermission):
+    def has_permission(self, request, view):
+
+        return True
+
+    def has_object_permission(self, request, view, obj):
+
+        if request.user.is_superuser:
+            return True
+        else:
+            return False
+
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializers
@@ -125,3 +138,14 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializers
+    permission_classes = [IsOwnerOrReadOnly_user]
+
+    def list(self, request):
+        if request.user.is_superuser:
+            queryset = User.objects.all()
+            serializer = ProfileSerializers(queryset, many=True)
+            return Response(serializer.data)
+        else:
+            queryset = {}
+            serializer = ProfileSerializers(queryset, many=True)
+            return Response(serializer.data)

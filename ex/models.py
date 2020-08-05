@@ -45,18 +45,6 @@ class Profile(models.Model):
     def __str__(self):
         return self.user.username
 
-    def random_bitcoin_init(self):
-        self.bitcoin = random.randint(1, 10)
-        self.save()
-
-    def add_ip(self, ip):
-        if ip in self.ips:
-            pass
-        else:
-            self.ips.append(ip)
-        self.save()
-
-    objects = djo.DjongoManager()
 
 class Order(models.Model):
 
