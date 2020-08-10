@@ -20,9 +20,11 @@ from ex import views
 from rest_framework.urlpatterns import format_suffix_patterns
 
 router = routers.DefaultRouter()
-router.register(r'orders', views.OrderViewSet)
+router.register(r'orders', views.OrderViewSet, basename='orders')
 router.register(r'profile', views.ProfileViewSet)
 router.register(r'user', views.UserViewSet)
+router.register(r'create_order', views.CreateOrderViewSet)
+router.register(r'balance', views.BalanceProfileViewSet, basename="balance")
 
 urlpatterns = [
     path('', include(router.urls)),

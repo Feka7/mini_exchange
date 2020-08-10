@@ -25,6 +25,8 @@ def perform_some_action_on_login(sender, user, request, **kwargs):
 
 user_logged_in.connect(perform_some_action_on_login)
 
+
+#creazione profilo utente
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
     if created:
@@ -43,8 +45,16 @@ def create_user_profile(sender, instance, created, **kwargs):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+#controllo ordine, se le condizioni sono verificate viene effettuato l'acquisto/vendita
+#NOTA: un'ordine rimane aperto fino a quando i numeri di bitcoin contenuti in esso non è pari a 0
 @receiver(post_save, sender=Order)
 def create_order(sender, instance, **kwargs):
+
+    #aggiungo id ordine al profilo
+    order_list = Profile.objects.filter(id=instance.profile_id).values('order_list')
+    new_order_list = str(order_list[0]['order_list']) + str(instance.id) + ", "
+    Profile.objects.filter(id=instance.profile_id).update(order_list=new_order_list)
+
     if instance.status == 'SA':
         orders = Order.objects.filter(status='PU').order_by('-price', 'published_date').values()
         for order in orders:

@@ -13,7 +13,15 @@ class ProfileSerializers(serializers.ModelSerializer):
             'bitcoin',
             'balance',
         ]
-#togliere classe profile e aggiungere in aut con user. prova con save post
+
+
+class BalanceProfileSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = [
+            'user',
+            'balance',
+        ]
 
 class OrderSerializers(serializers.ModelSerializer):
 
@@ -22,6 +30,16 @@ class OrderSerializers(serializers.ModelSerializer):
         fields = [
             'profile',
             'published_date',
+            'quantity',
+            'price',
+            'status',
+        ]
+
+class CreateOrderSerializers(serializers.ModelSerializer):
+
+    class Meta:
+        model = Order
+        fields = [
             'quantity',
             'price',
             'status',

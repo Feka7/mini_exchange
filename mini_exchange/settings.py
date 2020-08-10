@@ -23,9 +23,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = '-y5sgiv2o-&&e%(g!7k!x)=yu%^!d4$6#*=$00c%caln@&*g18'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1']
 
 
 # Application definition
@@ -81,8 +81,8 @@ DATABASES = {
     "ENGINE": "djongo",
     "CLIENT": {
         "host": "mongodb+srv://<username>:<password>@cluster0.oksi5.mongodb.net/<dbname>?retryWrites=true&w=majority",
-        "username": "Fede",
-        "password": "eAkCBErujxA8vnYE",
+        "username": "client",
+        "password": "A2XLFTkVGG52K1RW",
         "name": "Cluster0",
         "authMechanism": "SCRAM-SHA-1",
     },

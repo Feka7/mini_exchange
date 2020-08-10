@@ -1,10 +1,10 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from .models import Profile, Order
-from .serialized import ProfileSerializers, OrderSerializers, UserSerializers
+from .serialized import *
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, DjangoObjectPermissions, IsAdminUser
 from django.contrib.auth.models import User
-from rest_framework import generics, permissions
+from rest_framework import generics
 from django.http import Http404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -13,73 +13,9 @@ import random
 from .utils import get_client_ip
 from django.shortcuts import get_object_or_404
 from pprint import pprint
-
-class IsOwnerOrReadOnly_order(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        # Instance must have an attribute named `owner`.
-        if request.user.is_superuser:
-            return True
-
-        if request.user.is_authenticated:
-            return True
-
-        return False
-
-    def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any request,
-        # so we'll always allow GET, HEAD or OPTIONS requests.
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        # Instance must have an attribute named `owner`.
-        if request.user.is_superuser:
-            return True
-
-        return str(obj.profile) == str(request.user)
-
-class IsOwnerOrReadOnly_profile(permissions.BasePermission):
-
-    def has_permission(self, request, view):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        # Instance must have an attribute named `owner`.
-        if request.user.is_superuser:
-            return True
-
-        if request.user.is_authenticated and request.method != "POST":
-            return True
-
-        return False
-
-    def has_object_permission(self, request, view, obj):
-        # Read permissions are allowed to any request,
-        # so we'll always allow GET, HEAD or OPTIONS requests.
-        if request.method in permissions.SAFE_METHODS:
-            return True
-
-        # Instance must have an attribute named `owner`.
-        if request.user.is_superuser:
-            return True
-
-        return str(obj.user) == str(request.user)
-
-
-class IsOwnerOrReadOnly_user(permissions.BasePermission):
-    def has_permission(self, request, view):
-
-        return True
-
-    def has_object_permission(self, request, view, obj):
-
-        if request.user.is_superuser:
-            return True
-        else:
-            return False
+from django.utils import timezone
+from django.shortcuts import redirect
+from .permissions import *
 
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.all()
@@ -119,10 +55,11 @@ class ProfileViewSet(viewsets.ModelViewSet):
             serializer = ProfileSerializers(user)
             return Response(serializer.data)
 
-#get object limit
+class BalanceProfileViewSet(viewsets.ModelViewSet):
 
-
-
+    queryset = Profile.objects.all()
+    serializer_class = BalanceProfileSerializers
+    permission_classes = [BalancePermission]
 
 class OrderViewSet(viewsets.ModelViewSet):
     """
@@ -131,6 +68,45 @@ class OrderViewSet(viewsets.ModelViewSet):
     permission_classes = [IsOwnerOrReadOnly_order]
     queryset = Order.objects.all()
     serializer_class = OrderSerializers
+
+#NOTA: non viene effettuato nessun controllo sulla disponibilità di credito o di bitcoin da
+#      parte dell'utente che effettua l'ordine. Questa feature potrebbe essere implementata
+#      eseguendo determinati controlli in questa classe e modificando la classe create_order
+#      in .utils
+class CreateOrderViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint that allows users to be viewed or edited.
+    """
+    permission_classes = [createOrderPermission]
+    queryset = Order.objects.all()
+    serializer_class = CreateOrderSerializers
+
+    def list(self, request):
+        queryset = {}
+        serializer = ProfileSerializers(queryset, many=True)
+        return Response(serializer.data)
+
+    def retrieve(self, request, pk=None):
+        serializer_error = {"error":"Data not found"}
+        return Response(serializer_error, status=status.HTTP_404_NOT_FOUND)
+
+    def create(self, request):
+        user_id = User.objects.filter(username=request.user.username).values('pk')
+        profile = Profile.objects.filter(user_id=user_id[0]['pk']).values('pk')
+        data = {
+            'profile' : profile[0]['pk'],
+            'published_date' : timezone.now(),
+            'quantity' : request.data['quantity'],
+            'price' : request.data['price'],
+            'status' : request.data['status'],
+        }
+        serializer = OrderSerializers(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return redirect("../orders/")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """
